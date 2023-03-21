@@ -5,6 +5,7 @@ import type { AppProps } from "next/app";
 import { SidebarDrawerProvider } from "@/contexts/SidebarDrawerContext";
 import { makeServer } from "@/services/mirage";
 import { QueryClient, QueryClientProvider } from "react-query";
+import {ReactQueryDevtools} from "react-query/devtools";
 
 const roboto = Roboto({
   weight: ["400", "500", "700"],
@@ -27,6 +28,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </main>
         </SidebarDrawerProvider>
       </ChakraProvider>
+      <ReactQueryDevtools />
     </QueryClientProvider>
   );
 }
