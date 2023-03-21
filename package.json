@@ -27,10 +27,13 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.43.7",
     "react-icons": "^4.8.0",
+    "react-query": "^3.39.3",
     "typescript": "5.0.2",
     "yup": "^1.0.2"
   },
   "devDependencies": {
+    "@types/faker": "^6.6.9",
+    "faker": "5.5.3 ",
     "miragejs": "^0.1.47"
   }
 }
