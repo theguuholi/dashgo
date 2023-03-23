@@ -4,8 +4,9 @@ import { Roboto } from "next/font/google";
 import type { AppProps } from "next/app";
 import { SidebarDrawerProvider } from "@/contexts/SidebarDrawerContext";
 import { makeServer } from "@/services/mirage";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClientProvider } from "react-query";
 import {ReactQueryDevtools} from "react-query/devtools";
+import { queryClient } from "@/services/queryClient";
 
 const roboto = Roboto({
   weight: ["400", "500", "700"],
@@ -15,8 +16,6 @@ const roboto = Roboto({
 if (process.env.NODE_ENV === "development") {
   makeServer();
 }
-
-const queryClient = new QueryClient();
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

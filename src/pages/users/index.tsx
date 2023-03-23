@@ -1,7 +1,9 @@
 import { Header } from "@/components/Header";
 import { Pagination } from "@/components/Pagination";
 import { Sidebar } from "@/components/Sidebar";
+import { api } from "@/services/api";
 import { useUsers } from "@/services/hooks/useUsers";
+import { queryClient } from "@/services/queryClient";
 import {
   Box,
   Button,
@@ -18,13 +20,13 @@ import {
   Text,
   useBreakpointValue,
   Spinner,
+  Link,
 } from "@chakra-ui/react";
-import Link from "next/link";
+import NextLink from "next/link";
 import { useState } from "react";
 import { RiAddLine, RiPencilLine } from "react-icons/ri";
 
 export default function UserList() {
-
   const [page, setPage] = useState(1);
 
   const isWideVersion = useBreakpointValue({
@@ -33,6 +35,15 @@ export default function UserList() {
   });
 
   const { data, isLoading, isFetching, error } = useUsers(page);
+
+  async function handlePrefetchUser(userId: Number){
+    return await queryClient.prefetchQuery(["user", userId], async () => {
+      const response = await api.get("users/${userId}")
+      return response.data
+    }, {
+      staleTime: 1000 * 60 * 10 //10 minutos
+    })
+  }
 
   return (
     <Box>
@@ -44,13 +55,13 @@ export default function UserList() {
           <Flex mb="8" justify="space-between" align="center">
             <Heading size="lg" fontWeight="normal">
               Usuarios
-              {
-                !isLoading && isFetching && <Spinner size="sm" color="gray.500" ml="4" />
-              }
+              {!isLoading && isFetching && (
+                <Spinner size="sm" color="gray.500" ml="4" />
+              )}
             </Heading>
 
             <Button
-              as={Link}
+              as={NextLink}
               size="sm"
               fontSize="sm"
               colorScheme="pink"
@@ -84,40 +95,47 @@ export default function UserList() {
                 </Thead>
 
                 <Tbody>
-                  {data.users.map(user => {
-                    return(
-                    <Tr key={user.id}>
-                      <Td px={["4", "4", "6"]}>
-                        <Checkbox colorScheme="pink"></Checkbox>
-                      </Td>
-                      <Td>
-                        <Box>
-                          <Text fontWeight="bold">{user.name}</Text>
-                          <Text fontSize="sm" color="gray.300">
-                          {user.email}
-                          </Text>
-                        </Box>
-                      </Td>
-                      {isWideVersion && <Td>{user.createdAt}</Td>}
-
-                      {isWideVersion && (
-                        <Td>
-                          <Button
-                            as="a"
-                            size="sm"
-                            fontSize="16"
-                            colorScheme="purple"
-                            leftIcon={<Icon as={RiPencilLine} />}
-                          >
-                            Editar
-                          </Button>
+                  {data.users.map((user) => {
+                    return (
+                      <Tr key={user.id}>
+                        <Td px={["4", "4", "6"]}>
+                          <Checkbox colorScheme="pink"></Checkbox>
                         </Td>
-                      )}
-                    </Tr>)
+                        <Td>
+                          <Box>
+                            <Link color="purple.400" onMouseEnter={() => handlePrefetchUser(user.id)}>
+                              <Text fontWeight="bold">{user.name}</Text>
+                            </Link>
+                            <Text fontSize="sm" color="gray.300">
+                              {user.email}
+                            </Text>
+                          </Box>
+                        </Td>
+                        {isWideVersion && <Td>{user.createdAt}</Td>}
+
+                        {isWideVersion && (
+                          <Td>
+                            <Button
+                              as="a"
+                              size="sm"
+                              fontSize="16"
+                              colorScheme="purple"
+                              leftIcon={<Icon as={RiPencilLine} />}
+                            >
+                              Editar
+                            </Button>
+                          </Td>
+                        )}
+                      </Tr>
+                    );
                   })}
                 </Tbody>
               </Table>
-              <Pagination totalCountOfRegisters={data.totalCount} currentPage={page} onPageChange={setPage}  />
+              <Pagination
+                totalCountOfRegisters={data.totalCount}
+                currentPage={page}
+                onPageChange={setPage}
+              />
             </>
           )}
         </Box>
