@@ -1,59 +1,79 @@
-import { Input } from "@/components/Form/Input";
-import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/Sidebar";
 import {
   Box,
   Button,
-  Divider,
   Flex,
   Heading,
-  HStack,
-  SimpleGrid,
+  Divider,
   VStack,
+  SimpleGrid,
+  HStack,
+  Input,
 } from "@chakra-ui/react";
-
-import { FieldError, SubmitHandler, useForm } from "react-hook-form";
+import Link from "next/link";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-
-import Link from "next/link";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useMutation } from "react-query";
+import { useRouter } from "next/router";
+import { Header } from "@/components/Header";
+import { Sidebar } from "@/components/Sidebar";
+import { api } from "@/services/api";
+import { queryClient } from "@/services/queryClient";
 
 type CreateUserFormData = {
-  nome: string;
+  name: string;
   email: string;
   password: string;
   password_confirmation: string;
 };
 
 const createUserFormSchema = yup.object().shape({
-  nome: yup.string().required("Nome obrigatorio"),
-  email: yup.string().required("E-mail obrigatorio").email("E-mail invalido"),
+  name: yup.string().required("Nome Obrigatório").min(3),
+  email: yup.string().required("E-mail Obrigatório").email("E-mail Inválido"),
   password: yup
     .string()
-    .required("Senha obrigatoria")
-    .min(6, "No minimo 6 characteres"),
+    .required("Senha Obrigatória")
+    .min(6, "Mínimo 6 caracteres"),
   password_confirmation: yup
     .string()
     .oneOf([null, yup.ref("password")], "As senhas precisam ser iguais"),
 });
 
 export default function CreateUser() {
+  const router = useRouter();
+
+  const createUser = useMutation(
+    async (user: CreateUserFormData) => {
+      await api.post("users", {
+        user: {
+          ...user,
+          created_at: new Date(),
+        },
+      });
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("users");
+      },
+    }
+  );
+
   const { register, handleSubmit, formState } = useForm({
     resolver: yupResolver(createUserFormSchema),
   });
-  const { errors } = formState;
 
   const handleCreateUser: SubmitHandler<CreateUserFormData> = async (
     values
   ) => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    console.log(values);
+    await createUser.mutateAsync(values);
+    router.push("/users");
   };
 
   return (
     <Box>
       <Header />
-      <Flex w="110%" my="6" maxWidth={1480} mx="auto" px="6">
+
+      <Flex w="100%" my="6" maxWidth={1480} mx="auto" px="6">
         <Sidebar />
 
         <Box
@@ -65,46 +85,45 @@ export default function CreateUser() {
           onSubmit={handleSubmit(handleCreateUser)}
         >
           <Heading size="lg" fontWeight="normal">
-            Criar Usuario
+            Criar usuário
           </Heading>
+
           <Divider my="6" borderColor="gray.700" />
 
           <VStack spacing="8">
             <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
               <Input
                 name="name"
-                type="text"
-                label="Nome Completo"
+                placeholder="name"
                 {...register("name")}
-                error={errors.name}
-              />
+                error={formState.errors.name}
+              ></Input>
               <Input
                 name="email"
-                label="E-mail"
+                placeholder="email"
                 type="email"
-                error={errors.email}
                 {...register("email")}
-              />
+                error={formState.errors.email}
+              ></Input>
             </SimpleGrid>
 
             <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
               <Input
                 name="password"
-                label="Senha"
+                placeholder="Password"
                 type="password"
-                error={errors.password}
                 {...register("password")}
+                error={formState.errors.password}
               />
               <Input
                 name="password_confirmation"
-                label="Confirmar Senha"
                 type="password"
-                error={errors.password_confirmation}
+                placeholder="Confirmação da senha"
                 {...register("password_confirmation")}
-              />
+                error={formState.errors.password_confirmation}
+              ></Input>
             </SimpleGrid>
           </VStack>
-
           <Flex mt="8" justify="flex-end">
             <HStack spacing="4">
               <Link href="/users" passHref>
@@ -112,11 +131,7 @@ export default function CreateUser() {
                   Cancelar
                 </Button>
               </Link>
-              <Button
-                colorScheme="pink"
-                type="submit"
-                isLoading={formState.isLoading}
-              >
+              <Button type="submit" colorScheme="pink">
                 Salvar
               </Button>
             </HStack>
